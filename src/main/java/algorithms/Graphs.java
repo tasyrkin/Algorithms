@@ -1,5 +1,6 @@
 package algorithms;
 
+import java.util.Arrays;
 import java.util.HashSet;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -93,13 +94,21 @@ public class Graphs {
             return new NumPathsResult(0, 0);
         }
 
+        final long[] cache = new long[graph.length];
+        Arrays.fill(cache, -1);
+
         final NumOfTraversals numOfTraversals = new NumOfTraversals();
-        final long numOfPaths = findNumOfPaths(graph, from, to, numOfTraversals);
+        final long numOfPaths = findNumOfPaths(graph, from, to, numOfTraversals, cache);
 
         return new NumPathsResult(numOfPaths, numOfTraversals.getValue());
     }
 
-    private static long findNumOfPaths(HashSet<Integer>[] graph, int from, int to, NumOfTraversals numOfTraversals) {
+    private static long findNumOfPaths(HashSet<Integer>[] graph, int from, int to, NumOfTraversals numOfTraversals, long[] cache) {
+
+        if(cache[from] != -1) {
+            return cache[from];
+        }
+
         if(from == to) {
             numOfTraversals.inc();
             return 1;
@@ -108,9 +117,12 @@ public class Graphs {
         long totalNumOfPaths = 0;
         if(fromVertices != null) {
             for(Integer nextVertex : fromVertices) {
-                totalNumOfPaths += findNumOfPaths(graph, nextVertex, to, numOfTraversals);
+                totalNumOfPaths += findNumOfPaths(graph, nextVertex, to, numOfTraversals, cache);
             }
         }
+
+        cache[from] = totalNumOfPaths;
+
         return totalNumOfPaths;
     }
 
