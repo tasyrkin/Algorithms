@@ -1,13 +1,80 @@
 package algorithms;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.FluentIterable;
-
 import java.util.HashSet;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
 public class Graphs {
+
+    private static class NumOfTraversals {
+        private int value;
+
+        public NumOfTraversals(){
+            value = 0;
+        }
+
+        private NumOfTraversals(int value){
+            this.value = value;
+        }
+
+        void inc() {
+            ++value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+    }
+
+    /**
+     * Contains result of the numOfPaths() method.
+     * It contains number of paths and number of traversals
+     * that was necessary to calculate the number of paths.
+     */
+    public static class NumPathsResult {
+        private long numOfPaths;
+        private long numOfTraversals;
+
+        public NumPathsResult(long numOfPaths, long numOfTraversals) {
+            this.numOfPaths = numOfPaths;
+            this.numOfTraversals = numOfTraversals;
+        }
+
+        public long getNumOfPaths() {
+            return numOfPaths;
+        }
+
+        public long getNumOfTraversals() {
+            return numOfTraversals;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            NumPathsResult that = (NumPathsResult) o;
+
+            if (numOfPaths != that.numOfPaths) return false;
+            return numOfTraversals == that.numOfTraversals;
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = (int) (numOfPaths ^ (numOfPaths >>> 32));
+            result = 31 * result + (int) (numOfTraversals ^ (numOfTraversals >>> 32));
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "NumPathsResult{" +
+                    "numOfPaths=" + numOfPaths +
+                    ", numOfTraversals=" + numOfTraversals +
+                    '}';
+        }
+    }
 
     /**
      * Finds the number of paths from one vertex to another in a direct acyclic graph.
@@ -17,31 +84,31 @@ public class Graphs {
      * @param to
      * @return
      */
-    public static long numOfPaths(HashSet<Integer>[] graph, int from, int to) {
+    public static NumPathsResult numOfPaths(HashSet<Integer>[] graph, int from, int to) {
         checkArgument(graph != null, "Graph is missing");
-        try {
-            HashSet<Integer> fromVertices = graph[from];
-            HashSet<Integer> toVertices = graph[to];
-        } catch (Exception e) {
-            throw new IllegalArgumentException(String.format("Invalid 'from' vertex [%s] or 'to' vertex [%d]", from, to), e);
-        }
+        checkArgument(from >= 0 && from < graph.length, "Invalid 'from' vertex [%d]", from);
+        checkArgument(to >= 0 && to < graph.length, "Invalid 'to' vertex [%d]", to);
 
         if(from == to) {
-            return 0;
+            return new NumPathsResult(0, 0);
         }
 
-        return findNumOfPaths(graph, from, to);
+        final NumOfTraversals numOfTraversals = new NumOfTraversals();
+        final long numOfPaths = findNumOfPaths(graph, from, to, numOfTraversals);
+
+        return new NumPathsResult(numOfPaths, numOfTraversals.getValue());
     }
 
-    private static long findNumOfPaths(HashSet<Integer>[] graph, int from, int to) {
+    private static long findNumOfPaths(HashSet<Integer>[] graph, int from, int to, NumOfTraversals numOfTraversals) {
         if(from == to) {
+            numOfTraversals.inc();
             return 1;
         }
         final HashSet<Integer> fromVertices = graph[from];
         long totalNumOfPaths = 0;
         if(fromVertices != null) {
             for(Integer nextVertex : fromVertices) {
-                totalNumOfPaths += findNumOfPaths(graph, nextVertex, to);
+                totalNumOfPaths += findNumOfPaths(graph, nextVertex, to, numOfTraversals);
             }
         }
         return totalNumOfPaths;
@@ -70,5 +137,4 @@ public class Graphs {
 
         return graph;
     }
-
 }
